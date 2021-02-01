@@ -4,6 +4,11 @@ import (
 	"net/http"
 )
 
+type pathToUrl struct {
+	Path string
+	URL  string
+}
+
 // MapHandler will return an http.HandlerFunc
 // (note HandlerFunc implements http.Handler interface)
 // will attempt to map any paths (keys in a map)
@@ -12,7 +17,17 @@ import (
 // http.Handler is used
 func MapHandler(pathToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
 	// TODO
-	return nil
+
+	handlerFunc := func(w http.ResponseWriter, r *http.Request) {
+		url, ok := pathToUrls[r.URL.Path]
+		if ok {
+			http.Redirect(w, r, url, http.StatusPermanentRedirect)
+		} else {
+			fallback.ServeHTTP(w, r)
+		}
+	}
+
+	return handlerFunc
 }
 
 // YAMLHandler will parse the provided YAML and then
@@ -31,7 +46,23 @@ func MapHandler(pathToUrls map[string]string, fallback http.Handler) http.Handle
 //
 // See MapHandler to create a similar http.Handler via
 // a mapping of paths to urls
-func YAMLHandler(yml []byte, fallback http.Handler) (http.HandlerFunc, error) {
+func YAMLHandler(yaml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	// TODO
+	parsedYAML, err := parseYAML(yaml)
+	if err != nil {
+		return nil, err
+	}
+
+	pathMap := buildMap(parsedYAML)
+
+	return MapHandler(pathMap, fallback), nil
+}
+
+func parseYAML(yaml []byte) ([]string, error) {
 	return nil, nil
+}
+
+func buildMap(parsedYAML []string) map[string]string {
+	parsedMap := make(map[string]string)
+	return parsedMap
 }
